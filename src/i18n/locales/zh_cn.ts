@@ -502,6 +502,14 @@ export const STRINGS_ZH_CN = {
             icon: '图标',
             color: '颜色',
             wordCount: '显示字数',
+            characterCount: '显示字符数',
+            countType: '计数单位',
+            countTypes: {
+                words: '单词',
+                characters: '字符'
+            },
+            characterCountTarget: '目标字符数',
+            characterCountTargetDescription: '此字段留空时不会使用每篇笔记的目标，因为目标属性存储的是单词目标。请为此分组设置目标以显示字符进度。',
             wordCountTarget: '目标字数',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

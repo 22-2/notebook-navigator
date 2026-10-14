@@ -139,7 +139,7 @@ export function useStorageVaultSync(params: {
         includeTypes?: ContentProviderType[],
         settingsOverride?: NotebookNavigatorSettings
     ) => void;
-    queueAllMarkdownForWordCountActivation: () => void;
+    queueAllMarkdownForTextCountActivation: (countType: 'wordCount' | 'characterCount') => void;
     queueIndexableFilesForContentGeneration: (files: TFile[], settings: NotebookNavigatorSettings) => { markdownFiles: TFile[] };
     queueIndexableFilesNeedingContentGeneration: (filesToCheck: TFile[], allFiles: TFile[], settings: NotebookNavigatorSettings) => void;
     disposeMetadataWaitDisposers: () => void;
@@ -174,7 +174,7 @@ export function useStorageVaultSync(params: {
         getIndexableFiles,
         getVisibleMarkdownFiles,
         queueMetadataContentWhenReady,
-        queueAllMarkdownForWordCountActivation,
+        queueAllMarkdownForTextCountActivation,
         queueIndexableFilesForContentGeneration,
         queueIndexableFilesNeedingContentGeneration,
         disposeMetadataWaitDisposers
@@ -592,7 +592,10 @@ export function useStorageVaultSync(params: {
 
         const applyWordCountConsumerUpdate = (update: MarkdownWordCountConsumerUpdate): void => {
             if (update.becameActive) {
-                queueAllMarkdownForWordCountActivation();
+                queueAllMarkdownForTextCountActivation('wordCount');
+            }
+            if (update.characterCountBecameActive) {
+                queueAllMarkdownForTextCountActivation('characterCount');
             }
         };
 
@@ -834,7 +837,7 @@ export function useStorageVaultSync(params: {
         pendingSyncTimeoutIdRef,
         queueIndexableFilesForContentGeneration,
         queueIndexableFilesNeedingContentGeneration,
-        queueAllMarkdownForWordCountActivation,
+        queueAllMarkdownForTextCountActivation,
         queueMetadataContentWhenReady,
         rebuildFileCacheRef,
         rebuildTagTree,

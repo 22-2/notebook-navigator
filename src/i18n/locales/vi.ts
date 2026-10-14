@@ -504,6 +504,14 @@ export const STRINGS_VI = {
             icon: 'Biểu tượng',
             color: 'Màu sắc',
             wordCount: 'Hiển thị số từ',
+            characterCount: 'Hiển thị số ký tự',
+            countType: 'Đơn vị đếm',
+            countTypes: {
+                words: 'Từ',
+                characters: 'Ký tự'
+            },
+            characterCountTarget: 'Mục tiêu số ký tự',
+            characterCountTargetDescription: 'Nếu để trống, mục tiêu của từng ghi chú sẽ không được dùng vì thuộc tính mục tiêu lưu mục tiêu số từ. Hãy đặt mục tiêu cho nhóm này để hiển thị tiến độ ký tự.',
             wordCountTarget: 'Số từ mục tiêu',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

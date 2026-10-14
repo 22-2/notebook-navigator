@@ -503,6 +503,14 @@ export const STRINGS_KO = {
             icon: '아이콘',
             color: '색상',
             wordCount: '단어 수 표시',
+            characterCount: '문자 수 표시',
+            countType: '집계 단위',
+            countTypes: {
+                words: '단어',
+                characters: '문자'
+            },
+            characterCountTarget: '목표 문자 수',
+            characterCountTargetDescription: '이 필드가 비어 있으면 목표 속성은 단어 목표를 저장하므로 노트별 목표를 사용하지 않습니다. 문자 진행률을 표시하려면 이 그룹에 목표를 설정하세요.',
             wordCountTarget: '목표 단어 수',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

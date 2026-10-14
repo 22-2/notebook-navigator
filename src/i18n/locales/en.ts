@@ -504,10 +504,19 @@ export const STRINGS_EN = {
             icon: 'Icon',
             color: 'Color',
             wordCount: 'Show word count',
+            characterCount: 'Show character count',
+            countType: 'Count unit',
+            countTypes: {
+                words: 'Words',
+                characters: 'Characters'
+            },
             wordCountTarget: 'Target word count',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:
                 'When this field is empty, the group goal uses the target property set in Settings > File display > Word and character count. Override it by setting a target value for this group.',
+            characterCountTarget: 'Target character count',
+            characterCountTargetDescription:
+                'When this field is empty, no per-note target is used because the target property stores word goals. Set a target value for this group to show character progress.',
             description: 'Customize the group header for this note. Leave the title empty to remove the header.'
         },
         mergeNotes: {

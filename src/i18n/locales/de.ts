@@ -506,6 +506,14 @@ export const STRINGS_DE = {
             icon: 'Symbol',
             color: 'Farbe',
             wordCount: 'Wortzahl anzeigen',
+            characterCount: 'Zeichenanzahl anzeigen',
+            countType: 'Zähleinheit',
+            countTypes: {
+                words: 'Wörter',
+                characters: 'Zeichen'
+            },
+            characterCountTarget: 'Zeichenziel',
+            characterCountTargetDescription: 'Wenn dieses Feld leer ist, wird kein Ziel pro Notiz verwendet, da die Zieleigenschaft Wortziele enthält. Lege ein Ziel für diese Gruppe fest, um den Zeichenfortschritt anzuzeigen.',
             wordCountTarget: 'Zielwortzahl',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

@@ -71,6 +71,7 @@ import { getCacheRebuildProgressTypes } from './storage/storageContentTypes';
 import { clearCacheRebuildNoticeState, getCacheRebuildNoticeState, setCacheRebuildNoticeState } from './storage/cacheRebuildNoticeStorage';
 import { shouldQueueFileThumbnailProvider } from './storageQueueFilters';
 import {
+    hasMarkdownCharacterCountConsumer,
     hasMarkdownWordCountConsumer,
     rescanMarkdownWordCountConsumers,
     subscribeInitialMarkdownWordCountConsumerResolution
@@ -299,39 +300,40 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         queueMetadataContentWhenReady
     });
 
-    // Coalesce activation events because a second clear could erase counts being written by the first queued pass.
-    const wordCountActivationInFlightRef = useRef(false);
-    const queueAllMarkdownForWordCountActivation = useCallback(() => {
-        if (wordCountActivationInFlightRef.current || stoppedRef.current) {
+    // Separate count fields can be activated independently; deduplicate only overlapping clears.
+    const textCountActivationsInFlightRef = useRef(new Set<'wordCount' | 'characterCount'>());
+    const queueAllMarkdownForTextCountActivation = useCallback((countType: 'wordCount' | 'characterCount') => {
+        const hasConsumer = (settings: typeof latestSettingsRef.current): boolean =>
+            countType === 'wordCount' ? hasMarkdownWordCountConsumer(settings, app) : hasMarkdownCharacterCountConsumer(settings, app);
+        if (textCountActivationsInFlightRef.current.has(countType) || stoppedRef.current) {
             return;
         }
-        wordCountActivationInFlightRef.current = true;
+        textCountActivationsInFlightRef.current.add(countType);
 
         runAsyncAction(
             async () => {
                 try {
                     const liveSettings = latestSettingsRef.current;
-                    if (!hasMarkdownWordCountConsumer(liveSettings, app)) {
+                    if (!hasConsumer(liveSettings)) {
                         return;
                     }
 
-                    // Clearing only this field leaves provider mtimes current, so the markdown pipeline
-                    // processes the newly missing count without rebuilding previews, images, tasks, or properties.
-                    await getDBInstance().batchClearAllFileContent('wordCount');
+                    // Clearing only the newly needed field lets the markdown pipeline reuse other cached output.
+                    await getDBInstance().batchClearAllFileContent(countType);
                     const nextSettings = latestSettingsRef.current;
-                    if (stoppedRef.current || !hasMarkdownWordCountConsumer(nextSettings, app)) {
+                    if (stoppedRef.current || !hasConsumer(nextSettings)) {
                         return;
                     }
 
                     const markdownFiles = getIndexableFiles().filter(file => file.extension === 'md');
                     queueMetadataContentWhenReady(markdownFiles, ['markdownPipeline'], nextSettings);
                 } finally {
-                    wordCountActivationInFlightRef.current = false;
+                    textCountActivationsInFlightRef.current.delete(countType);
                 }
             },
             {
                 onError: error => {
-                    console.error('Failed to activate word counting for custom group headers:', error);
+                    console.error(`Failed to activate ${countType} for custom group headers:`, error);
                 }
             }
         );
@@ -596,14 +598,18 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         // The one-shot listener catches startup metadata that was unavailable to the immediate scan. Obsidian
         // emits `resolved` after later edits too, which must stay on the incremental metadata-change path.
         return subscribeInitialMarkdownWordCountConsumerResolution(app, () => {
-            if (rescanMarkdownWordCountConsumers(app, latestSettingsRef.current).becameActive) {
-                queueAllMarkdownForWordCountActivation();
+            const update = rescanMarkdownWordCountConsumers(app, latestSettingsRef.current);
+            if (update.becameActive) {
+                queueAllMarkdownForTextCountActivation('wordCount');
+            }
+            if (update.characterCountBecameActive) {
+                queueAllMarkdownForTextCountActivation('characterCount');
             }
         });
     }, [
         app,
         latestSettingsRef,
-        queueAllMarkdownForWordCountActivation,
+        queueAllMarkdownForTextCountActivation,
         settings.manualSortGroupHeaderProperty,
         settings.manualSortPropertyKey
     ]);
@@ -638,7 +644,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         getIndexableFiles,
         getVisibleMarkdownFiles,
         queueMetadataContentWhenReady,
-        queueAllMarkdownForWordCountActivation,
+        queueAllMarkdownForTextCountActivation,
         queueIndexableFilesForContentGeneration,
         queueIndexableFilesNeedingContentGeneration,
         disposeMetadataWaitDisposers

@@ -465,6 +465,7 @@ export function useListPaneData({
             isManualSortActive,
             manualSortGroupHeaderPropertyKey,
             wordCountTargetProperty: settings.wordCountTargetProperty,
+            characterCountSpaces: settings.characterCountSpaces,
             groupItemCountData
         });
     }, [
@@ -491,6 +492,7 @@ export function useListPaneData({
         isManualSortActive,
         manualSortGroupHeaderPropertyKey,
         settings.wordCountTargetProperty,
+        settings.characterCountSpaces,
         groupItemCountData
     ]);
 
@@ -511,6 +513,7 @@ export function useListPaneData({
     const customGroupHeaderState = useMemo(() => {
         const filePaths = new Set<string>();
         let hasWordCountGroupHeaders = false;
+        let hasCharacterCountGroupHeaders = false;
 
         listItems.forEach(item => {
             if (item.type !== ListPaneItemType.HEADER || item.headerKind !== 'manual-sort-custom') {
@@ -521,12 +524,16 @@ export function useListPaneData({
                 filePaths.add(item.manualSortHeaderFilePath);
             }
 
-            if (item.manualSortHeaderShowsWordCount === true) {
-                hasWordCountGroupHeaders = true;
+            if (item.manualSortHeaderShowsCount === true) {
+                if (item.manualSortHeader?.countType === 'characters') {
+                    hasCharacterCountGroupHeaders = true;
+                } else {
+                    hasWordCountGroupHeaders = true;
+                }
             }
         });
 
-        return { filePaths, hasWordCountGroupHeaders };
+        return { filePaths, hasWordCountGroupHeaders, hasCharacterCountGroupHeaders };
     }, [listItems]);
 
     useListPaneRefresh({
@@ -541,6 +548,7 @@ export function useListPaneData({
         groupBy,
         hasDateSearchFilters,
         hasManualSortWordCountGroupHeaders: customGroupHeaderState.hasWordCountGroupHeaders,
+        hasManualSortCharacterCountGroupHeaders: customGroupHeaderState.hasCharacterCountGroupHeaders,
         hasPropertySearchFilters,
         hasTaskSearchFilters,
         hiddenFilePropertyMatcher,

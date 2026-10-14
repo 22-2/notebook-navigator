@@ -505,6 +505,14 @@ export const STRINGS_TR = {
             icon: 'Simge',
             color: 'Renk',
             wordCount: 'Kelime sayısını göster',
+            characterCount: 'Karakter sayısını göster',
+            countType: 'Sayım birimi',
+            countTypes: {
+                words: 'Kelimeler',
+                characters: 'Karakterler'
+            },
+            characterCountTarget: 'Hedef karakter sayısı',
+            characterCountTargetDescription: 'Bu alan boşsa hedef özelliği kelime hedeflerini tuttuğundan not başına hedef kullanılmaz. Karakter ilerlemesini göstermek için bu gruba bir hedef belirleyin.',
             wordCountTarget: 'Hedef kelime sayısı',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

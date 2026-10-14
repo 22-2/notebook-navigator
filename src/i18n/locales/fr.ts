@@ -508,6 +508,14 @@ export const STRINGS_FR = {
             icon: 'Icône',
             color: 'Couleur',
             wordCount: 'Afficher le nombre de mots',
+            characterCount: 'Afficher le nombre de caractères',
+            countType: 'Unité de comptage',
+            countTypes: {
+                words: 'Mots',
+                characters: 'Caractères'
+            },
+            characterCountTarget: 'Objectif de caractères',
+            characterCountTargetDescription: 'Si ce champ est vide, aucun objectif par note ne sera utilisé, car la propriété cible contient des objectifs en mots. Définissez un objectif pour ce groupe afin d’afficher la progression en caractères.',
             wordCountTarget: 'Nombre de mots cible',
             wordCountTargetPlaceholder: '10 000',
             wordCountTargetDescription:

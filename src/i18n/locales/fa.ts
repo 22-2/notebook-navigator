@@ -504,6 +504,14 @@ export const STRINGS_FA = {
             icon: 'آیکون',
             color: 'رنگ',
             wordCount: 'نمایش تعداد کلمات',
+            characterCount: 'نمایش تعداد نویسه',
+            countType: 'واحد شمارش',
+            countTypes: {
+                words: 'واژه‌ها',
+                characters: 'نویسه‌ها'
+            },
+            characterCountTarget: 'هدف تعداد نویسه',
+            characterCountTargetDescription: 'اگر این فیلد خالی باشد، هدف هر یادداشت استفاده نمی‌شود چون ویژگی هدف برای هدف واژه‌ها است. برای نمایش پیشرفت نویسه، برای این گروه هدف تعیین کنید.',
             wordCountTarget: 'تعداد کلمات هدف',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

@@ -507,6 +507,14 @@ export const STRINGS_PL = {
             icon: 'Ikona',
             color: 'Kolor',
             wordCount: 'Pokaż liczbę słów',
+            characterCount: 'Pokaż liczbę znaków',
+            countType: 'Jednostka zliczania',
+            countTypes: {
+                words: 'Słowa',
+                characters: 'Znaki'
+            },
+            characterCountTarget: 'Docelowa liczba znaków',
+            characterCountTargetDescription: 'Jeśli to pole jest puste, cel dla każdej notatki nie będzie używany, ponieważ właściwość celu przechowuje cele słów. Ustaw cel dla tej grupy, aby wyświetlić postęp znaków.',
             wordCountTarget: 'Docelowa liczba słów',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

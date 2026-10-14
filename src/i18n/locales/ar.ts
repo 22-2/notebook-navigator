@@ -504,6 +504,14 @@ export const STRINGS_AR = {
             icon: 'الأيقونة',
             color: 'اللون',
             wordCount: 'إظهار عدد الكلمات',
+            characterCount: 'إظهار عدد الأحرف',
+            countType: 'وحدة العد',
+            countTypes: {
+                words: 'كلمات',
+                characters: 'أحرف'
+            },
+            characterCountTarget: 'عدد الأحرف المستهدف',
+            characterCountTargetDescription: 'عند ترك هذا الحقل فارغًا، لن يُستخدم هدف لكل ملاحظة لأن خاصية الهدف تحفظ أهداف عدد الكلمات. عيّن هدفًا لهذه المجموعة لعرض تقدم الأحرف.',
             wordCountTarget: 'عدد الكلمات المستهدف',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

@@ -29,8 +29,8 @@ type ManualSortGroupHeaderStyle = CSSProperties & {
 
 interface ManualSortGroupHeaderContentProps {
     header: ManualSortGroupHeaderData;
-    wordCount: number;
-    targetWordCount?: number | null;
+    count: number;
+    targetCount?: number | null;
 }
 
 interface ManualSortGroupHeaderProgressData {
@@ -44,11 +44,11 @@ function getDisplayWordCount(wordCount: number): number {
 
 function formatManualSortGroupHeaderCountText(
     header: ManualSortGroupHeaderData,
-    wordCount: number,
-    targetWordCount: number | null | undefined
+    count: number,
+    targetCount: number | null | undefined
 ): string {
-    const formattedWordCount = formatTextCount(getDisplayWordCount(wordCount));
-    const resolvedTargetWordCount = getManualSortGroupHeaderTargetWordCount(header, targetWordCount);
+    const formattedWordCount = formatTextCount(getDisplayWordCount(count));
+    const resolvedTargetWordCount = getManualSortGroupHeaderTargetWordCount(header, targetCount);
     if (resolvedTargetWordCount !== null) {
         return `${formattedWordCount} / ${formatTextCount(resolvedTargetWordCount)}`;
     }
@@ -67,11 +67,11 @@ function getProgressPercent(wordCount: number, targetWordCount: number): number 
 
 function getManualSortGroupHeaderProgress(
     header: ManualSortGroupHeaderData,
-    wordCount: number,
-    targetWordCount: number | null | undefined
+    count: number,
+    targetCount: number | null | undefined
 ): ManualSortGroupHeaderProgressData {
-    const resolvedTargetWordCount = getManualSortGroupHeaderTargetWordCount(header, targetWordCount);
-    const progressPercent = resolvedTargetWordCount !== null ? getProgressPercent(wordCount, resolvedTargetWordCount) : null;
+    const resolvedTargetWordCount = getManualSortGroupHeaderTargetWordCount(header, targetCount);
+    const progressPercent = resolvedTargetWordCount !== null ? getProgressPercent(count, resolvedTargetWordCount) : null;
     const progressWidth = progressPercent === null ? null : Math.min(100, Math.max(0, progressPercent));
 
     return {
@@ -96,10 +96,10 @@ function getManualSortGroupHeaderStyle(
     return style;
 }
 
-export function ManualSortGroupHeaderContent({ header, wordCount, targetWordCount }: ManualSortGroupHeaderContentProps) {
+export function ManualSortGroupHeaderContent({ header, count, targetCount }: ManualSortGroupHeaderContentProps) {
     const shouldShowWordCount = shouldShowManualSortGroupHeaderWordCount(header);
-    const countText = formatManualSortGroupHeaderCountText(header, wordCount, targetWordCount);
-    const progress = getManualSortGroupHeaderProgress(header, wordCount, targetWordCount);
+    const countText = formatManualSortGroupHeaderCountText(header, count, targetCount);
+    const progress = getManualSortGroupHeaderProgress(header, count, targetCount);
     const style = getManualSortGroupHeaderStyle(header, progress);
     const contentClasses = ['nn-manual-sort-group-header-content'];
     if (header.color && progress.progressPercent === null) {
@@ -123,8 +123,8 @@ export function ManualSortGroupHeaderContent({ header, wordCount, targetWordCoun
     );
 }
 
-export function ManualSortGroupHeaderProgress({ header, wordCount, targetWordCount }: ManualSortGroupHeaderContentProps) {
-    const progress = getManualSortGroupHeaderProgress(header, wordCount, targetWordCount);
+export function ManualSortGroupHeaderProgress({ header, count, targetCount }: ManualSortGroupHeaderContentProps) {
+    const progress = getManualSortGroupHeaderProgress(header, count, targetCount);
 
     if (progress.progressWidth === null) {
         return null;

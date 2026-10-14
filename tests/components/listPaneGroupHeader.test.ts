@@ -41,8 +41,8 @@ function createHeader(itemCount: number | null, totalItemCount: number | null = 
         totalItemCount,
         manualSortHeaderFilePath: null,
         manualSortHeader: null,
-        manualSortHeaderWordCount: 0,
-        manualSortHeaderTargetWordCount: null,
+        manualSortHeaderCount: 0,
+        manualSortHeaderTargetCount: null,
         folderIconId: null,
         folderColor: null,
         applyFolderColorToLabel: false

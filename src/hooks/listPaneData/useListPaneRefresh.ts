@@ -47,6 +47,7 @@ interface UseListPaneRefreshArgs {
     groupBy: ListNoteGroupingOption;
     hasDateSearchFilters: boolean;
     hasManualSortWordCountGroupHeaders: boolean;
+    hasManualSortCharacterCountGroupHeaders: boolean;
     hasPropertySearchFilters: boolean;
     hasTaskSearchFilters: boolean;
     hiddenFilePropertyMatcher: ReturnType<typeof createFrontmatterPropertyExclusionMatcher>;
@@ -195,6 +196,7 @@ export function useListPaneRefresh({
     groupBy,
     hasDateSearchFilters,
     hasManualSortWordCountGroupHeaders,
+    hasManualSortCharacterCountGroupHeaders,
     hasPropertySearchFilters,
     hasTaskSearchFilters,
     hiddenFilePropertyMatcher,
@@ -543,10 +545,15 @@ export function useListPaneRefresh({
                 shouldRefresh = changes.some(change => change.changes.taskUnfinished !== undefined && basePathSet.has(change.path));
             }
 
-            if (!shouldRefresh && hasManualSortWordCountGroupHeaders) {
+            if (!shouldRefresh && (hasManualSortWordCountGroupHeaders || hasManualSortCharacterCountGroupHeaders)) {
                 shouldRefresh = changes.some(
                     change =>
-                        (change.changes.wordCount !== undefined || change.changes.properties !== undefined) && basePathSet.has(change.path)
+                        ((hasManualSortWordCountGroupHeaders &&
+                            (change.changes.wordCount !== undefined || change.changes.properties !== undefined)) ||
+                            (hasManualSortCharacterCountGroupHeaders &&
+                                (change.changes.characterCountWithSpaces !== undefined ||
+                                    change.changes.characterCountWithoutSpaces !== undefined))) &&
+                        basePathSet.has(change.path)
                 );
             }
 
@@ -576,6 +583,7 @@ export function useListPaneRefresh({
         groupBy,
         hasDateSearchFilters,
         hasManualSortWordCountGroupHeaders,
+        hasManualSortCharacterCountGroupHeaders,
         hasPropertySearchFilters,
         hasTaskSearchFilters,
         hiddenFilePropertyMatcher,

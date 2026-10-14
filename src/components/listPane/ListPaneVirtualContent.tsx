@@ -81,8 +81,8 @@ export interface HeaderRenderModel {
     totalItemCount: number | null;
     manualSortHeaderFilePath: string | null;
     manualSortHeader: ManualSortGroupHeaderData | null;
-    manualSortHeaderWordCount: number;
-    manualSortHeaderTargetWordCount: number | null;
+    manualSortHeaderCount: number;
+    manualSortHeaderTargetCount: number | null;
     folderIconId: string | null;
     folderColor: string | null;
     applyFolderColorToLabel: boolean;
@@ -247,7 +247,7 @@ function shouldHideCollapsedHeaderSeparator(header: HeaderRenderModel | null): b
 
 function shouldHideManualSortGoalHeaderSeparator(header: HeaderRenderModel | null): boolean {
     return header?.manualSortHeader
-        ? shouldShowManualSortGroupHeaderProgress(header.manualSortHeader, header.manualSortHeaderTargetWordCount)
+        ? shouldShowManualSortGroupHeaderProgress(header.manualSortHeader, header.manualSortHeaderTargetCount)
         : false;
 }
 
@@ -266,7 +266,7 @@ export const ListPaneGroupHeader = React.memo(function ListPaneGroupHeader({
     const hasFolderPathSegments = header.folderGroupHeaderSegments.length > 0;
     const isClickableFolderGroupHeader = Boolean(folderGroupHeaderTarget) && !header.isPinnedHeader && !hasFolderPathSegments;
     const hasManualSortGoal =
-        manualSortHeader !== null && shouldShowManualSortGroupHeaderProgress(manualSortHeader, header.manualSortHeaderTargetWordCount);
+        manualSortHeader !== null && shouldShowManualSortGroupHeaderProgress(manualSortHeader, header.manualSortHeaderTargetCount);
     const folderColor = header.folderColor ?? undefined;
     const folderIconStyle = folderColor ? { color: folderColor } : undefined;
     const folderLabelStyle = header.applyFolderColorToLabel && folderColor ? { color: folderColor } : undefined;
@@ -368,8 +368,8 @@ export const ListPaneGroupHeader = React.memo(function ListPaneGroupHeader({
             {manualSortHeader ? (
                 <ManualSortGroupHeaderContent
                     header={manualSortHeader}
-                    wordCount={header.manualSortHeaderWordCount}
-                    targetWordCount={header.manualSortHeaderTargetWordCount}
+                    count={header.manualSortHeaderCount}
+                    targetCount={header.manualSortHeaderTargetCount}
                 />
             ) : (
                 <>
@@ -422,8 +422,8 @@ export const ListPaneGroupHeader = React.memo(function ListPaneGroupHeader({
                 {headerRow}
                 <ManualSortGroupHeaderProgress
                     header={manualSortHeader}
-                    wordCount={header.manualSortHeaderWordCount}
-                    targetWordCount={header.manualSortHeaderTargetWordCount}
+                    count={header.manualSortHeaderCount}
+                    targetCount={header.manualSortHeaderTargetCount}
                 />
             </div>
         );
@@ -807,8 +807,8 @@ export function ListPaneVirtualContent({
                 totalItemCount: settings.showGroupHeaderItemCounts ? (item.groupTotalItemCount ?? null) : null,
                 manualSortHeaderFilePath: item.headerKind === 'manual-sort-custom' ? (item.manualSortHeaderFilePath ?? null) : null,
                 manualSortHeader,
-                manualSortHeaderWordCount: item.manualSortHeaderWordCount ?? 0,
-                manualSortHeaderTargetWordCount: item.manualSortHeaderTargetWordCount ?? null,
+                manualSortHeaderCount: item.manualSortHeaderCount ?? 0,
+                manualSortHeaderTargetCount: item.manualSortHeaderTargetCount ?? null,
                 folderIconId,
                 folderColor,
                 applyFolderColorToLabel: folderColor !== null && !settings.colorIconOnly

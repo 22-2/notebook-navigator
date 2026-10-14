@@ -85,7 +85,7 @@ export function filterFilesRequiringMetadataSources(
     const previewEnabled = hasMarkdownPreviewConsumer(settings);
     const featureImageEnabled = hasMarkdownFeatureImageConsumer(settings);
     const wordCountEnabled = hasMarkdownWordCountConsumer(settings, app);
-    const characterCountEnabled = hasMarkdownCharacterCountConsumer(settings);
+    const characterCountEnabled = hasMarkdownCharacterCountConsumer(settings, app);
     const tasksEnabled = hasMarkdownTaskConsumer(settings);
 
     return files.filter(file => {

@@ -505,6 +505,14 @@ export const STRINGS_ID = {
             icon: 'Ikon',
             color: 'Warna',
             wordCount: 'Tampilkan jumlah kata',
+            characterCount: 'Tampilkan jumlah karakter',
+            countType: 'Satuan hitung',
+            countTypes: {
+                words: 'Kata',
+                characters: 'Karakter'
+            },
+            characterCountTarget: 'Target jumlah karakter',
+            characterCountTargetDescription: 'Jika kolom ini kosong, target per catatan tidak digunakan karena properti target menyimpan target kata. Tetapkan target untuk grup ini agar progres karakter ditampilkan.',
             wordCountTarget: 'Target jumlah kata',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

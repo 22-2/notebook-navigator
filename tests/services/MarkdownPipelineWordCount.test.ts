@@ -26,7 +26,9 @@ import { deriveFileMetadata } from '../utils/pathMetadata';
 import { setActivePropertyFields } from '../../src/utils/vaultProfiles';
 import {
     getMarkdownTextCountDependencies,
+    getMarkdownPipelineContentTypes,
     hasCachedMarkdownWordCountConsumer,
+    hasMarkdownCharacterCountConsumer,
     hasMarkdownWordCountConsumer,
     haveMarkdownCountConsumersChanged,
     refreshMarkdownWordCountConsumerForFile,
@@ -189,6 +191,34 @@ describe('Markdown pipeline appearance relevance', () => {
         expect(getMarkdownTextCountDependencies(app, bothShownGlobally)).toEqual([]);
     });
 
+    it('activates only character-count extraction for character group headers', () => {
+        const { app, cachedMetadataByPath, markdownFiles } = createApp();
+        const headerFile = createFile('Notes/Chapter.md');
+        markdownFiles.push(headerFile);
+        cachedMetadataByPath.set(headerFile.path, {
+            frontmatter: {
+                group_header: { title: 'Chapter', show_word_count: true, count_type: 'characters' }
+            }
+        });
+        const settings = createSettings({
+            textCountDisplay: 'none',
+            noteGrouping: 'custom',
+            defaultFolderSort: 'title-asc',
+            manualSortGroupHeaderProperty: 'group_header'
+        });
+
+        expect(rescanMarkdownWordCountConsumers(app, settings)).toEqual({
+            becameActive: false,
+            characterCountBecameActive: true,
+            dependenciesChanged: true
+        });
+        expect(hasMarkdownWordCountConsumer(settings, app)).toBe(false);
+        expect(hasMarkdownCharacterCountConsumer(settings, app)).toBe(true);
+        expect(getMarkdownPipelineContentTypes(settings, app)).toContain('characterCount');
+        expect(getMarkdownPipelineContentTypes(settings, app)).not.toContain('wordCount');
+        expect(getMarkdownTextCountDependencies(app, settings)).toEqual([{ reason: 'group-header', path: headerFile.path }]);
+    });
+
     it('uses the initialized group-header cache without scanning the vault from render checks', () => {
         const { app, cachedMetadataByPath, markdownFiles } = createApp();
         const headerFile = createFile('Projects/Header.md');
@@ -282,8 +312,16 @@ describe('Markdown pipeline appearance relevance', () => {
             }
         });
 
-        expect(rescanMarkdownWordCountConsumers(app, settings)).toEqual({ becameActive: true, dependenciesChanged: true });
-        expect(rescanMarkdownWordCountConsumers(app, settings)).toEqual({ becameActive: false, dependenciesChanged: false });
+        expect(rescanMarkdownWordCountConsumers(app, settings)).toEqual({
+            becameActive: true,
+            characterCountBecameActive: false,
+            dependenciesChanged: true
+        });
+        expect(rescanMarkdownWordCountConsumers(app, settings)).toEqual({
+            becameActive: false,
+            characterCountBecameActive: false,
+            dependenciesChanged: false
+        });
     });
 
     it('removes the startup resolution listener before later metadata resolutions', () => {
@@ -333,6 +371,7 @@ describe('Markdown pipeline appearance relevance', () => {
 
         expect(refreshMarkdownWordCountConsumerForFile(app, headerFile, settings)).toEqual({
             becameActive: true,
+            characterCountBecameActive: false,
             dependenciesChanged: true
         });
         expect(hasCachedMarkdownWordCountConsumer(settings, app)).toBe(true);
@@ -345,6 +384,7 @@ describe('Markdown pipeline appearance relevance', () => {
         });
         expect(refreshMarkdownWordCountConsumerForFile(app, headerFile, settings)).toEqual({
             becameActive: false,
+            characterCountBecameActive: false,
             dependenciesChanged: true
         });
         expect(hasCachedMarkdownWordCountConsumer(settings, app)).toBe(false);
@@ -384,6 +424,7 @@ describe('Markdown pipeline appearance relevance', () => {
         });
         expect(refreshMarkdownWordCountConsumerForFile(app, headerFile, settings)).toEqual({
             becameActive: false,
+            characterCountBecameActive: false,
             dependenciesChanged: true
         });
         expect(hasCachedMarkdownWordCountConsumer(settings, app)).toBe(false);
@@ -421,6 +462,7 @@ describe('Markdown pipeline appearance relevance', () => {
         });
         expect(renameMarkdownWordCountConsumersInFolder(app, 'Projects', 'Archive', settings)).toEqual({
             becameActive: false,
+            characterCountBecameActive: false,
             dependenciesChanged: true
         });
         expect(getMarkdownFiles).toHaveBeenCalledOnce();
@@ -428,6 +470,7 @@ describe('Markdown pipeline appearance relevance', () => {
         markdownFiles.splice(0, 1);
         expect(removeMarkdownWordCountConsumersInFolder(app, 'Archive', settings)).toEqual({
             becameActive: false,
+            characterCountBecameActive: false,
             dependenciesChanged: true
         });
         expect(getMarkdownFiles).toHaveBeenCalledOnce();

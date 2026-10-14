@@ -24,6 +24,7 @@ import { runAsyncAction, type MaybePromise } from '../utils/async';
 import { getIconService } from '../services/icons';
 import {
     parseManualSortGroupHeaderTargetWordCount,
+    type ManualSortGroupHeaderCountType,
     type ManualSortGroupHeaderData,
     type ManualSortGroupHeaderWriteValue
 } from '../utils/manualSort';
@@ -36,11 +37,15 @@ interface ManualSortGroupHeaderModalOptions {
 export class ManualSortGroupHeaderModal extends Modal {
     private headerInputEl: HTMLInputElement | null = null;
     private targetInputEl: HTMLInputElement | null = null;
+    private targetLabelEl: HTMLElement | null = null;
+    private targetDescriptionEl: HTMLElement | null = null;
+    private wordCountSetting: Setting | null = null;
     private iconPreviewEl: HTMLSpanElement | null = null;
     private iconButtonTextEl: HTMLSpanElement | null = null;
     private colorPreviewEl: HTMLSpanElement | null = null;
     private colorButtonTextEl: HTMLSpanElement | null = null;
     private showWordCount = false;
+    private countType: ManualSortGroupHeaderCountType = 'words';
     private iconId: string | null = null;
     private color: string | null = null;
     private isSubmitting = false;
@@ -53,6 +58,7 @@ export class ManualSortGroupHeaderModal extends Modal {
     ) {
         super(app);
         this.showWordCount = initialValue?.showWordCount ?? false;
+        this.countType = initialValue?.countType === 'characters' ? 'characters' : 'words';
         this.iconId = initialValue?.iconId ?? null;
         this.color = initialValue?.color ?? null;
     }
@@ -98,7 +104,19 @@ export class ManualSortGroupHeaderModal extends Modal {
         this.updateColorControls();
 
         const wordCountSectionEl = this.createSection(contentEl);
-        const wordCountSetting = new Setting(wordCountSectionEl).setName(strings.modals.manualSortGroupHeader.wordCount).addToggle(toggle =>
+        new Setting(wordCountSectionEl)
+            .setName(strings.modals.manualSortGroupHeader.countType)
+            .addDropdown(dropdown =>
+                dropdown
+                    .addOption('words', strings.modals.manualSortGroupHeader.countTypes.words)
+                    .addOption('characters', strings.modals.manualSortGroupHeader.countTypes.characters)
+                    .setValue(this.countType)
+                    .onChange(value => {
+                        this.countType = value === 'characters' ? 'characters' : 'words';
+                        this.updateCountTypeControls();
+                    })
+            );
+        this.wordCountSetting = new Setting(wordCountSectionEl).addToggle(toggle =>
             toggle.setValue(this.showWordCount).onChange(value => {
                 this.showWordCount = value;
                 if (!value && this.targetInputEl) {
@@ -107,23 +125,18 @@ export class ManualSortGroupHeaderModal extends Modal {
                 this.updateWordCountTargetControl();
             })
         );
-        wordCountSetting.settingEl.addClass('nn-manual-sort-header-toggle-setting');
+        this.wordCountSetting.settingEl.addClass('nn-manual-sort-header-toggle-setting');
 
         const targetFieldEl = wordCountSectionEl.createDiv({ cls: 'nn-manual-sort-header-field nn-manual-sort-header-target-field' });
-        targetFieldEl.createDiv({
-            cls: 'nn-manual-sort-header-field-label',
-            text: strings.modals.manualSortGroupHeader.wordCountTarget
-        });
+        this.targetLabelEl = targetFieldEl.createDiv({ cls: 'nn-manual-sort-header-field-label' });
         this.targetInputEl = targetFieldEl.createEl('input', { cls: 'nn-manual-sort-header-input' });
         this.targetInputEl.type = 'text';
         this.targetInputEl.inputMode = 'numeric';
         this.targetInputEl.placeholder = strings.modals.manualSortGroupHeader.wordCountTargetPlaceholder;
         this.targetInputEl.value = this.showWordCount ? (this.initialValue?.targetWordCount?.toString() ?? '') : '';
         this.targetInputEl.addEventListener('input', this.filterTargetInput);
-        targetFieldEl.createDiv({
-            cls: 'nn-input-description nn-manual-sort-header-target-description',
-            text: strings.modals.manualSortGroupHeader.wordCountTargetDescription
-        });
+        this.targetDescriptionEl = targetFieldEl.createDiv({ cls: 'nn-input-description nn-manual-sort-header-target-description' });
+        this.updateCountTypeControls();
         this.updateWordCountTargetControl();
 
         const buttonContainer = contentEl.createDiv('nn-button-container');
@@ -154,6 +167,9 @@ export class ManualSortGroupHeaderModal extends Modal {
 
     onClose(): void {
         this.targetInputEl?.removeEventListener('input', this.filterTargetInput);
+        this.wordCountSetting = null;
+        this.targetLabelEl = null;
+        this.targetDescriptionEl = null;
         this.modalEl.removeClass('nn-manual-sort-group-header-modal');
         this.contentEl.empty();
     }
@@ -236,6 +252,23 @@ export class ManualSortGroupHeaderModal extends Modal {
         this.targetInputEl.disabled = !this.showWordCount;
     }
 
+    private updateCountTypeControls(): void {
+        const isCharacterCount = this.countType === 'characters';
+        this.wordCountSetting?.setName(
+            isCharacterCount ? strings.modals.manualSortGroupHeader.characterCount : strings.modals.manualSortGroupHeader.wordCount
+        );
+        this.targetLabelEl?.setText(
+            isCharacterCount
+                ? strings.modals.manualSortGroupHeader.characterCountTarget
+                : strings.modals.manualSortGroupHeader.wordCountTarget
+        );
+        this.targetDescriptionEl?.setText(
+            isCharacterCount
+                ? strings.modals.manualSortGroupHeader.characterCountTargetDescription
+                : strings.modals.manualSortGroupHeader.wordCountTargetDescription
+        );
+    }
+
     private readonly filterTargetInput = (): void => {
         if (!this.targetInputEl) {
             return;
@@ -261,6 +294,7 @@ export class ManualSortGroupHeaderModal extends Modal {
         const value: ManualSortGroupHeaderWriteValue = {
             title: this.headerInputEl?.value ?? '',
             showWordCount: this.showWordCount,
+            countType: this.countType,
             targetWordCount,
             iconId: this.iconId,
             color: this.color

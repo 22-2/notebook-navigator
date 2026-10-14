@@ -22,6 +22,7 @@ import { showsCharacterCount, showsWordCount, type NotebookNavigatorSettings } f
 import { ItemType, PROPERTIES_ROOT_VIRTUAL_FOLDER_ID, TAGGED_TAG_ID, UNTAGGED_TAG_ID } from '../types';
 import { hasEffectiveCustomListGroupingForSelection } from './listGrouping';
 import {
+    getManualSortGroupHeaderCharacterCountConsumerSnapshot,
     getManualSortGroupHeaderWordCountConsumerSnapshot,
     refreshManualSortGroupHeaderWordCountConsumer,
     removeManualSortGroupHeaderWordCountConsumer,
@@ -44,9 +45,14 @@ interface AppearanceTextCountConsumers {
 }
 
 let appearanceTextCountConsumerCache = new WeakMap<object, AppearanceTextCountConsumers>();
-const activeGroupHeaderWordCountConsumerCache = new WeakMap<
+const activeGroupHeaderCountConsumerCache = new WeakMap<
     App,
-    { settings: NotebookNavigatorSettings; sourceVersion: number; paths: readonly string[] }
+    {
+        settings: NotebookNavigatorSettings;
+        sourceVersion: number;
+        wordCountPaths: readonly string[];
+        characterCountPaths: readonly string[];
+    }
 >();
 const markdownWordCountConsumerChangeStores = new WeakMap<App, { version: number; listeners: Set<() => void> }>();
 
@@ -57,6 +63,8 @@ export type MarkdownTextCountDependency =
 export interface MarkdownWordCountConsumerUpdate {
     /** True when this update introduced the first consumer; false when counting was already active or remains inactive. */
     becameActive: boolean;
+    /** True when this update introduced the first character-count consumer. */
+    characterCountBecameActive: boolean;
     /** True when the active custom group-header paths changed; false when the dependency list stayed the same. */
     dependenciesChanged: boolean;
 }
@@ -216,16 +224,19 @@ function hasActiveCustomGroupingForHeader(app: App, settings: NotebookNavigatorS
     );
 }
 
-function getActiveManualSortGroupHeaderWordCountConsumerPaths(
+function getActiveManualSortGroupHeaderCountConsumerPaths(
     app: App,
     settings: NotebookNavigatorSettings,
+    countType: 'words' | 'characters',
     options?: { scanIfMissing?: boolean }
 ): readonly string[] {
-    const source = getManualSortGroupHeaderWordCountConsumerSnapshot(app, settings, options);
-    const cached = activeGroupHeaderWordCountConsumerCache.get(app);
-    const sourceIsCurrent = cached?.sourceVersion === source.version;
+    const wordSource = getManualSortGroupHeaderWordCountConsumerSnapshot(app, settings, options);
+    const characterSource = getManualSortGroupHeaderCharacterCountConsumerSnapshot(app, settings, options);
+    const sourceVersion = Math.max(wordSource.version, characterSource.version);
+    const cached = activeGroupHeaderCountConsumerCache.get(app);
+    const sourceIsCurrent = cached?.sourceVersion === sourceVersion;
     if (sourceIsCurrent && (cached.settings === settings || options?.scanIfMissing === false)) {
-        return cached.paths;
+        return countType === 'words' ? cached.wordCountPaths : cached.characterCountPaths;
     }
     // Cache-only callers never resolve files or metadata. Settings publication and storage events
     // prepare the derived snapshot before React reads it.
@@ -233,12 +244,25 @@ function getActiveManualSortGroupHeaderWordCountConsumerPaths(
         return [];
     }
 
-    const paths = source.paths.filter(path => {
+    const wordPathSet = new Set(wordSource.paths);
+    const characterPathSet = new Set(characterSource.paths);
+    const candidates = new Set([...wordPathSet, ...characterPathSet]);
+    const wordCountPaths: string[] = [];
+    const characterCountPaths: string[] = [];
+    candidates.forEach(path => {
         const file = app.vault.getFileByPath(path);
-        return file ? hasActiveCustomGroupingForHeader(app, settings, file) : false;
+        if (!file || !hasActiveCustomGroupingForHeader(app, settings, file)) {
+            return;
+        }
+        if (wordPathSet.has(path)) {
+            wordCountPaths.push(path);
+        }
+        if (characterPathSet.has(path)) {
+            characterCountPaths.push(path);
+        }
     });
-    activeGroupHeaderWordCountConsumerCache.set(app, { settings, sourceVersion: source.version, paths });
-    return paths;
+    activeGroupHeaderCountConsumerCache.set(app, { settings, sourceVersion, wordCountPaths, characterCountPaths });
+    return countType === 'words' ? wordCountPaths : characterCountPaths;
 }
 
 /**
@@ -271,6 +295,10 @@ function hasSettingsBackedMarkdownWordCountConsumer(settings: NotebookNavigatorS
     return hasWordCountTargetPropertyConsumer(settings) || hasAppearanceTextCountConsumer(settings, 'words');
 }
 
+function hasSettingsBackedMarkdownCharacterCountConsumer(settings: NotebookNavigatorSettings): boolean {
+    return showsCharacterCount(settings.textCountDisplay) || hasAppearanceTextCountConsumer(settings, 'characters');
+}
+
 /**
  * The tooltip word count setting is deliberately not a consumer. Tooltips show a word count
  * only for notes whose resolved appearance already displays one, so enabling the tooltip
@@ -279,7 +307,7 @@ function hasSettingsBackedMarkdownWordCountConsumer(settings: NotebookNavigatorS
 export function hasMarkdownWordCountConsumer(settings: NotebookNavigatorSettings, app?: App): boolean {
     return (
         hasSettingsBackedMarkdownWordCountConsumer(settings) ||
-        (app !== undefined && getActiveManualSortGroupHeaderWordCountConsumerPaths(app, settings).length > 0)
+        (app !== undefined && getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'words').length > 0)
     );
 }
 
@@ -290,13 +318,27 @@ export function hasMarkdownWordCountConsumer(settings: NotebookNavigatorSettings
 export function hasCachedMarkdownWordCountConsumer(settings: NotebookNavigatorSettings, app: App): boolean {
     return (
         hasSettingsBackedMarkdownWordCountConsumer(settings) ||
-        getActiveManualSortGroupHeaderWordCountConsumerPaths(app, settings, { scanIfMissing: false }).length > 0
+        getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'words', { scanIfMissing: false }).length > 0
+    );
+}
+
+export function hasMarkdownCharacterCountConsumer(settings: NotebookNavigatorSettings, app?: App): boolean {
+    return (
+        hasSettingsBackedMarkdownCharacterCountConsumer(settings) ||
+        (app !== undefined && getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'characters').length > 0)
+    );
+}
+
+export function hasCachedMarkdownCharacterCountConsumer(settings: NotebookNavigatorSettings, app: App): boolean {
+    return (
+        hasSettingsBackedMarkdownCharacterCountConsumer(settings) ||
+        getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'characters', { scanIfMissing: false }).length > 0
     );
 }
 
 function invalidateMarkdownWordCountConsumerSettings(app: App): void {
     appearanceTextCountConsumerCache = new WeakMap<object, AppearanceTextCountConsumers>();
-    activeGroupHeaderWordCountConsumerCache.delete(app);
+    activeGroupHeaderCountConsumerCache.delete(app);
 }
 
 /** Rebuilds settings-derived consumer results before mutable plugin settings are published to listeners. */
@@ -305,6 +347,7 @@ export function refreshMarkdownWordCountConsumerSettings(app: App, settings: Not
     // The prepared result is shared with cache-only render checks even though SettingsProvider
     // publishes a snapshot object with a different identity from the mutable plugin settings.
     hasMarkdownWordCountConsumer(settings, app);
+    hasMarkdownCharacterCountConsumer(settings, app);
 }
 
 function areMarkdownWordCountConsumerPathsEqual(left: readonly string[], right: readonly string[]): boolean {
@@ -314,16 +357,24 @@ function areMarkdownWordCountConsumerPathsEqual(left: readonly string[], right: 
 function finalizeMarkdownWordCountConsumerUpdate(
     app: App,
     settings: NotebookNavigatorSettings,
-    beforePaths: readonly string[],
-    afterPaths: readonly string[]
+    beforeWordPaths: readonly string[],
+    afterWordPaths: readonly string[],
+    beforeCharacterPaths: readonly string[],
+    afterCharacterPaths: readonly string[]
 ): MarkdownWordCountConsumerUpdate {
-    const settingsBackedConsumer = hasSettingsBackedMarkdownWordCountConsumer(settings);
-    const dependenciesChanged = !areMarkdownWordCountConsumerPathsEqual(beforePaths, afterPaths);
+    const wordCountBecameActive =
+        !hasSettingsBackedMarkdownWordCountConsumer(settings) && beforeWordPaths.length === 0 && afterWordPaths.length > 0;
+    const characterCountBecameActive =
+        !hasSettingsBackedMarkdownCharacterCountConsumer(settings) && beforeCharacterPaths.length === 0 && afterCharacterPaths.length > 0;
+    const dependenciesChanged =
+        !areMarkdownWordCountConsumerPathsEqual(beforeWordPaths, afterWordPaths) ||
+        !areMarkdownWordCountConsumerPathsEqual(beforeCharacterPaths, afterCharacterPaths);
     if (dependenciesChanged) {
         publishMarkdownWordCountConsumerChange(app);
     }
     return {
-        becameActive: !settingsBackedConsumer && beforePaths.length === 0 && afterPaths.length > 0,
+        becameActive: wordCountBecameActive,
+        characterCountBecameActive,
         dependenciesChanged
     };
 }
@@ -336,10 +387,19 @@ function applyMarkdownWordCountConsumerUpdate(
     // Metadata cache events arrive after Obsidian has published the new metadata. Preserve the last
     // prepared derived paths here; resolving them again would erase the pre-event state needed to
     // detect a context activation or deactivation.
-    const beforePaths = getActiveManualSortGroupHeaderWordCountConsumerPaths(app, settings, { scanIfMissing: false });
+    const beforeWordPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'words', { scanIfMissing: false });
+    const beforeCharacterPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'characters', { scanIfMissing: false });
     updateSource();
-    const afterPaths = getActiveManualSortGroupHeaderWordCountConsumerPaths(app, settings);
-    return finalizeMarkdownWordCountConsumerUpdate(app, settings, beforePaths, afterPaths);
+    const afterWordPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'words');
+    const afterCharacterPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'characters');
+    return finalizeMarkdownWordCountConsumerUpdate(
+        app,
+        settings,
+        beforeWordPaths,
+        afterWordPaths,
+        beforeCharacterPaths,
+        afterCharacterPaths
+    );
 }
 
 function applyPreparedMarkdownWordCountConsumerUpdate(
@@ -347,27 +407,45 @@ function applyPreparedMarkdownWordCountConsumerUpdate(
     settings: NotebookNavigatorSettings,
     updateSource: () => boolean
 ): MarkdownWordCountConsumerUpdate {
-    const beforePaths = getActiveManualSortGroupHeaderWordCountConsumerPaths(app, settings, { scanIfMissing: false });
+    const beforeWordPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'words', { scanIfMissing: false });
+    const beforeCharacterPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'characters', { scanIfMissing: false });
     if (!updateSource()) {
-        return { becameActive: false, dependenciesChanged: false };
+        return { becameActive: false, characterCountBecameActive: false, dependenciesChanged: false };
     }
     // Prefix updates preserve an existing source cache, so resolving its invalidated ordering and
     // active list contexts cannot fall back to a vault-wide metadata scan.
-    const afterPaths = getActiveManualSortGroupHeaderWordCountConsumerPaths(app, settings);
-    return finalizeMarkdownWordCountConsumerUpdate(app, settings, beforePaths, afterPaths);
+    const afterWordPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'words');
+    const afterCharacterPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'characters');
+    return finalizeMarkdownWordCountConsumerUpdate(
+        app,
+        settings,
+        beforeWordPaths,
+        afterWordPaths,
+        beforeCharacterPaths,
+        afterCharacterPaths
+    );
 }
 
 /**
  * Rebuilds metadata-backed group-header consumers.
  * Callers use the transition to populate counts that were intentionally absent while every consumer was disabled.
  *
- * @returns Whether word counting became active and whether the active header paths changed.
+ * @returns Which count type became active and whether active header paths changed.
  */
 export function rescanMarkdownWordCountConsumers(app: App, settings: NotebookNavigatorSettings): MarkdownWordCountConsumerUpdate {
-    const beforePaths = getActiveManualSortGroupHeaderWordCountConsumerPaths(app, settings, { scanIfMissing: false });
+    const beforeWordPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'words', { scanIfMissing: false });
+    const beforeCharacterPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'characters', { scanIfMissing: false });
     rescanManualSortGroupHeaderWordCountConsumers(app, settings);
-    const afterPaths = getActiveManualSortGroupHeaderWordCountConsumerPaths(app, settings);
-    return finalizeMarkdownWordCountConsumerUpdate(app, settings, beforePaths, afterPaths);
+    const afterWordPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'words');
+    const afterCharacterPaths = getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'characters');
+    return finalizeMarkdownWordCountConsumerUpdate(
+        app,
+        settings,
+        beforeWordPaths,
+        afterWordPaths,
+        beforeCharacterPaths,
+        afterCharacterPaths
+    );
 }
 
 /** Refreshes one note after Obsidian publishes its frontmatter metadata. */
@@ -462,16 +540,17 @@ export function getMarkdownTextCountDependencies(app: App, settings: NotebookNav
     });
 
     if (includeWords) {
-        getActiveManualSortGroupHeaderWordCountConsumerPaths(app, settings).forEach(path => {
+        getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'words').forEach(path => {
+            dependencies.push({ reason: 'group-header', path });
+        });
+    }
+    if (includeCharacters) {
+        getActiveManualSortGroupHeaderCountConsumerPaths(app, settings, 'characters').forEach(path => {
             dependencies.push({ reason: 'group-header', path });
         });
     }
 
     return dependencies;
-}
-
-export function hasMarkdownCharacterCountConsumer(settings: NotebookNavigatorSettings): boolean {
-    return showsCharacterCount(settings.textCountDisplay) || hasAppearanceTextCountConsumer(settings, 'characters');
 }
 
 /** Returns whether a settings update changes which text counts the markdown pipeline must extract. */
@@ -482,7 +561,7 @@ export function haveMarkdownCountConsumersChanged(
 ): boolean {
     return (
         hasMarkdownWordCountConsumer(oldSettings, app) !== hasMarkdownWordCountConsumer(newSettings, app) ||
-        hasMarkdownCharacterCountConsumer(oldSettings) !== hasMarkdownCharacterCountConsumer(newSettings)
+        hasMarkdownCharacterCountConsumer(oldSettings, app) !== hasMarkdownCharacterCountConsumer(newSettings, app)
     );
 }
 
@@ -502,7 +581,7 @@ export function getMarkdownPipelineContentTypes(settings: NotebookNavigatorSetti
     if (hasMarkdownWordCountConsumer(settings, app)) {
         types.push('wordCount');
     }
-    if (hasMarkdownCharacterCountConsumer(settings)) {
+    if (hasMarkdownCharacterCountConsumer(settings, app)) {
         types.push('characterCount');
     }
     if (hasMarkdownTaskConsumer(settings)) {

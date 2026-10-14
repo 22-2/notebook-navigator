@@ -506,10 +506,19 @@ export const STRINGS_JA = {
             icon: 'アイコン',
             color: '色',
             wordCount: '単語数を表示',
+            characterCount: '文字数を表示',
+            countType: '集計単位',
+            countTypes: {
+                words: '単語数',
+                characters: '文字数'
+            },
             wordCountTarget: '目標単語数',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:
                 'このフィールドが空の場合、グループ目標は 設定 > ファイル表示 > 単語数と文字数 で設定された目標プロパティを使用します。このグループに目標値を設定すると上書きできます。',
+            characterCountTarget: '目標文字数',
+            characterCountTargetDescription:
+                'このフィールドが空の場合、単語数用の目標プロパティは使用されません。文字数の進捗を表示するには、このグループに目標値を設定してください。',
             description: 'このノートのグループヘッダーをカスタマイズします。ヘッダーを削除するには、タイトルを空のままにします。'
         },
         mergeNotes: {

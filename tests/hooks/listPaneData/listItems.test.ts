@@ -32,13 +32,15 @@ import { FILE_VISIBILITY } from '../../../src/utils/fileTypeUtils';
 import { createTestTFile } from '../../utils/createTestTFile';
 import { ItemType, ListPaneItemType, PINNED_SECTION_HEADER_KEY } from '../../../src/types';
 import { buildListGroupCollapseKey, buildListGroupCollapseKeyPrefix } from '../../../src/utils/listGroupCollapse';
-import { formatTextCount } from '../../../src/utils/wordCountUtils';
+import { countCharactersForNoteProperty, formatTextCount } from '../../../src/utils/wordCountUtils';
 import type { ListPaneItem } from '../../../src/types/virtualization';
 
 interface FileMetadataRecord {
     properties: PropertyItem[] | null;
     tags: readonly string[] | null;
     wordCount?: number | null;
+    characterCountWithSpaces?: number | null;
+    characterCountWithoutSpaces?: number | null;
 }
 
 function createApp(): App {
@@ -1290,8 +1292,85 @@ describe('buildListItems pinned display scope', () => {
             targetFile.path,
             hiddenTargetFile.path
         ]);
-        expect(manualSortHeaders.map(item => item.manualSortHeaderShowsWordCount)).toEqual([true, true, false]);
-        expect(manualSortHeaders.map(item => item.manualSortHeaderTargetWordCount)).toEqual([3000, 10000, 5000]);
+        expect(manualSortHeaders.map(item => item.manualSortHeaderShowsCount)).toEqual([true, true, false]);
+        expect(manualSortHeaders.map(item => item.manualSortHeaderTargetCount)).toEqual([3000, 10000, 5000]);
+    });
+
+    it.each(['include', 'exclude'] as const)('sums cached character counts using the configured space mode (%s)', characterCountSpaces => {
+        const app = createApp();
+        const firstHeader = createTestTFile('notes/first-header.md');
+        const firstMember = createTestTFile('notes/first-member.md');
+        const secondHeader = createTestTFile('notes/second-header.md');
+        const secondMember = createTestTFile('notes/second-member.md');
+        const notes = [firstHeader, firstMember, secondHeader, secondMember];
+        const texts = ['日本語 😀 \r\n', '続き\t', '別章', '終わり '];
+        const counts = texts.map(text => countCharactersForNoteProperty(text, 0));
+        app.metadataCache.getFileCache = (file: TFile) => ({
+            frontmatter:
+                file === firstHeader
+                    ? {
+                          group_header: { title: 'Chapter 1', show_word_count: true, count_type: 'characters', target_word_count: 10000 },
+                          'word-goal': 9000
+                      }
+                    : file === secondHeader
+                      ? {
+                            group_header: { title: 'Chapter 2', show_word_count: true, count_type: 'characters' },
+                            'word-goal': 8000
+                        }
+                      : { 'word-goal': file === firstMember ? 7000 : 6000 }
+        });
+        const db = createDb(
+            Object.fromEntries(
+                notes.map((file, index) => [
+                    file.path,
+                    {
+                        tags: null,
+                        properties: [{ fieldKey: 'word-goal', value: index * 1000 + 1000, valueKind: 'number' }],
+                        wordCount: 1,
+                        characterCountWithSpaces: counts[index].withSpaces,
+                        characterCountWithoutSpaces: counts[index].withoutSpaces
+                    }
+                ])
+            )
+        );
+
+        const items = buildListItems({
+            app,
+            dayKey: '2026-03-07',
+            fileVisibility: FILE_VISIBILITY.DOCUMENTS,
+            files: notes,
+            getDB: () => db,
+            getFileTimestamps: () => ({ created: 0, modified: 0 }),
+            hiddenFileState: new Map(),
+            hiddenTags: [],
+            listConfig: { ...createListConfig({}), groupBy: 'custom' },
+            searchMetaMap: new Map(),
+            selectedFolder: null,
+            selectionType: ItemType.FOLDER,
+            showHiddenItems: false,
+            sortOption: 'property-asc',
+            propertySortKey: 'index',
+            isManualSortActive: true,
+            manualSortGroupHeaderPropertyKey: 'group_header',
+            wordCountTargetProperty: 'word-goal',
+            characterCountSpaces
+        });
+
+        const getCount = (index: number): number =>
+            characterCountSpaces === 'include' ? counts[index].withSpaces : counts[index].withoutSpaces;
+        const firstGroupCount = getCount(0) + getCount(1);
+        const secondGroupCount = getCount(2) + getCount(3);
+        expect(getHeaderItems(items)).toEqual([
+            { data: 'Unsorted', kind: 'section' },
+            {
+                data: `Chapter 1 (${formatTextCount(firstGroupCount)} / ${formatTextCount(10000)})`,
+                kind: 'manual-sort-custom'
+            },
+            { data: `Chapter 2 (${formatTextCount(secondGroupCount)})`, kind: 'manual-sort-custom' }
+        ]);
+        const headers = items.filter(item => item.type === ListPaneItemType.HEADER && item.headerKind === 'manual-sort-custom');
+        expect(headers.map(item => item.manualSortHeaderCount)).toEqual([firstGroupCount, secondGroupCount]);
+        expect(headers.map(item => item.manualSortHeaderTargetCount)).toEqual([10000, null]);
     });
 
     it('does not add manual sort custom headers when the group header key is disabled', () => {

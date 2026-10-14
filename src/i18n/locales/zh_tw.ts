@@ -503,6 +503,14 @@ export const STRINGS_ZH_TW = {
             icon: '圖示',
             color: '顏色',
             wordCount: '顯示字數',
+            characterCount: '顯示字元數',
+            countType: '計數單位',
+            countTypes: {
+                words: '單字',
+                characters: '字元'
+            },
+            characterCountTarget: '目標字元數',
+            characterCountTargetDescription: '此欄位留白時不會使用每篇筆記的目標，因為目標屬性儲存的是單字目標。請為此群組設定目標以顯示字元進度。',
             wordCountTarget: '目標字數',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

@@ -506,6 +506,14 @@ export const STRINGS_UK = {
             icon: 'Значок',
             color: 'Колір',
             wordCount: 'Показувати кількість слів',
+            characterCount: 'Показувати кількість символів',
+            countType: 'Одиниця підрахунку',
+            countTypes: {
+                words: 'Слова',
+                characters: 'Символи'
+            },
+            characterCountTarget: 'Цільова кількість символів',
+            characterCountTargetDescription: 'Якщо поле порожнє, цілі окремих нотаток не використовуються, оскільки властивість цілі зберігає цілі слів. Укажіть ціль для цієї групи, щоб бачити прогрес за символами.',
             wordCountTarget: 'Цільова кількість слів',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

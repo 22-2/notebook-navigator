@@ -504,6 +504,14 @@ export const STRINGS_IT = {
             icon: 'Icona',
             color: 'Colore',
             wordCount: 'Mostra il conteggio parole',
+            characterCount: 'Mostra conteggio caratteri',
+            countType: 'Unità di conteggio',
+            countTypes: {
+                words: 'Parole',
+                characters: 'Caratteri'
+            },
+            characterCountTarget: 'Obiettivo caratteri',
+            characterCountTargetDescription: 'Se il campo è vuoto, non verrà usato un obiettivo per nota perché la proprietà obiettivo contiene obiettivi in parole. Imposta un obiettivo per questo gruppo per mostrare il progresso dei caratteri.',
             wordCountTarget: 'Conteggio parole obiettivo',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

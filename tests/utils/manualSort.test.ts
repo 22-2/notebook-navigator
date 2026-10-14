@@ -29,6 +29,7 @@ import {
     getCachedManualSortGroupHeader,
     getCachedManualSortGroupHeaderValue,
     getCachedManualSortRank,
+    getManualSortGroupHeaderCharacterCountConsumerPaths,
     getManualSortGroupHeaderWordCountConsumerPaths,
     getFolderPlanningInsertionIndex,
     getManualSortGroupHeaderPropertyKey,
@@ -420,6 +421,7 @@ describe('manual sort helpers', () => {
         expect(getCachedManualSortGroupHeader(app, objectFile, 'group')).toEqual({
             title: 'Chapter 1',
             showWordCount: true,
+            countType: 'words',
             targetWordCount: 10000,
             iconId: null,
             color: null
@@ -430,6 +432,21 @@ describe('manual sort helpers', () => {
         expect(getCachedManualSortGroupHeaderValue(app, emptyStringFile, 'group')).toBeNull();
         expect(getCachedManualSortGroupHeaderValue(app, arrayFile, 'group')).toBeNull();
         expect(getCachedManualSortGroupHeaderValue(app, nonMarkdown, 'group')).toBeNull();
+    });
+
+    it('keeps character-count headers separate from word-count consumers', () => {
+        const wordsHeader = createFile('notes/words.md', {
+            group_header: { title: 'Words', show_word_count: true }
+        });
+        const charactersHeader = createFile('notes/characters.md', {
+            group_header: { title: 'Characters', show_word_count: true, count_type: 'characters' }
+        });
+        const app = createApp([wordsHeader, charactersHeader], vi.fn());
+        const settings = structuredClone(DEFAULT_SETTINGS);
+
+        expect(getManualSortGroupHeaderWordCountConsumerPaths(app, settings)).toEqual(['notes/words.md']);
+        expect(getManualSortGroupHeaderCharacterCountConsumerPaths(app, settings)).toEqual(['notes/characters.md']);
+        expect(getCachedManualSortGroupHeader(app, charactersHeader, 'group_header')?.countType).toBe('characters');
     });
 
     it('formats manual sort group headers with word count progress', () => {
@@ -972,6 +989,30 @@ describe('manual sort helpers', () => {
                 target_word_count: 10000,
                 icon: 'book-open',
                 color: '#3b82f6'
+            }
+        });
+    });
+
+    it('writes character count mode with its group-specific target', async () => {
+        const file = createFile('notes/characters.md', {});
+        const processFrontMatter = vi.fn(async (targetFile: TFile, callback: (frontmatter: Record<string, unknown>) => void) => {
+            callback((targetFile as TFile & { frontmatter: Record<string, unknown> }).frontmatter);
+        });
+        const app = createApp([file], processFrontMatter);
+
+        await writeManualSortGroupHeader(app, file, 'group', {
+            title: 'Characters',
+            showWordCount: true,
+            countType: 'characters',
+            targetWordCount: 10000
+        });
+
+        expect(file.frontmatter).toEqual({
+            group: {
+                title: 'Characters',
+                show_word_count: true,
+                target_word_count: 10000,
+                count_type: 'characters'
             }
         });
     });

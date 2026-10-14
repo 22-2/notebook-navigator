@@ -507,6 +507,14 @@ export const STRINGS_ES = {
             icon: 'Icono',
             color: 'Color',
             wordCount: 'Mostrar el recuento de palabras',
+            characterCount: 'Mostrar recuento de caracteres',
+            countType: 'Unidad de recuento',
+            countTypes: {
+                words: 'Palabras',
+                characters: 'Caracteres'
+            },
+            characterCountTarget: 'Objetivo de caracteres',
+            characterCountTargetDescription: 'Si este campo está vacío, no se usará un objetivo por nota porque la propiedad de objetivo guarda metas de palabras. Define un objetivo para este grupo para mostrar el progreso en caracteres.',
             wordCountTarget: 'Recuento de palabras objetivo',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

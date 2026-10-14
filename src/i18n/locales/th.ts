@@ -503,6 +503,14 @@ export const STRINGS_TH = {
             icon: 'ไอคอน',
             color: 'สี',
             wordCount: 'แสดงจำนวนคำ',
+            characterCount: 'แสดงจำนวนอักขระ',
+            countType: 'หน่วยนับ',
+            countTypes: {
+                words: 'คำ',
+                characters: 'อักขระ'
+            },
+            characterCountTarget: 'เป้าหมายจำนวนอักขระ',
+            characterCountTargetDescription: 'หากช่องนี้ว่าง จะไม่ใช้เป้าหมายของแต่ละบันทึก เนื่องจากคุณสมบัติเป้าหมายเก็บเป้าหมายจำนวนคำไว้ ตั้งเป้าหมายให้กลุ่มนี้เพื่อแสดงความคืบหน้าของอักขระ',
             wordCountTarget: 'จำนวนคำเป้าหมาย',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

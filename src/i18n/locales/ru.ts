@@ -505,6 +505,14 @@ export const STRINGS_RU = {
             icon: 'Иконка',
             color: 'Цвет',
             wordCount: 'Показывать количество слов',
+            characterCount: 'Показывать количество символов',
+            countType: 'Единица подсчёта',
+            countTypes: {
+                words: 'Слова',
+                characters: 'Символы'
+            },
+            characterCountTarget: 'Цель по символам',
+            characterCountTargetDescription: 'Если поле пустое, цели отдельных заметок не используются, поскольку свойство цели хранит цели по словам. Задайте цель для этой группы, чтобы показывать прогресс по символам.',
             wordCountTarget: 'Целевое количество слов',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

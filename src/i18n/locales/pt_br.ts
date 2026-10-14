@@ -507,6 +507,14 @@ export const STRINGS_PT_BR = {
             icon: 'Ícone',
             color: 'Cor',
             wordCount: 'Mostrar contagem de palavras',
+            characterCount: 'Mostrar contagem de caracteres',
+            countType: 'Unidade de contagem',
+            countTypes: {
+                words: 'Palavras',
+                characters: 'Caracteres'
+            },
+            characterCountTarget: 'Meta de caracteres',
+            characterCountTargetDescription: 'Quando este campo estiver vazio, nenhuma meta por nota será usada, pois a propriedade de meta armazena metas de palavras. Defina uma meta para este grupo para mostrar o progresso em caracteres.',
             wordCountTarget: 'Contagem de palavras alvo',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:

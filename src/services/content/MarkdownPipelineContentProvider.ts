@@ -147,7 +147,8 @@ export function getMarkdownPipelineClearFlags(
         shouldClearProperties: false,
         shouldClearFeatureImage,
         shouldClearWordCounts: !hasMarkdownWordCountConsumer(oldSettings, app) && hasMarkdownWordCountConsumer(newSettings, app),
-        shouldClearCharacterCounts: !hasMarkdownCharacterCountConsumer(oldSettings) && hasMarkdownCharacterCountConsumer(newSettings)
+        shouldClearCharacterCounts:
+            !hasMarkdownCharacterCountConsumer(oldSettings, app) && hasMarkdownCharacterCountConsumer(newSettings, app)
     };
 }
 
@@ -394,7 +395,7 @@ export class MarkdownPipelineContentProvider extends FeatureImageContentProvider
         {
             id: 'characterCount',
             needsProcessing: context => {
-                if (!hasMarkdownCharacterCountConsumer(context.settings)) {
+                if (!hasMarkdownCharacterCountConsumer(context.settings, this.app)) {
                     return false;
                 }
                 if (
@@ -606,7 +607,7 @@ export class MarkdownPipelineContentProvider extends FeatureImageContentProvider
         const needsProperties = fileData.properties === null;
         const needsWordCount = hasMarkdownWordCountConsumer(settings, this.app) && fileData.wordCount === null;
         const needsCharacterCount =
-            hasMarkdownCharacterCountConsumer(settings) &&
+            hasMarkdownCharacterCountConsumer(settings, this.app) &&
             (fileData.characterCountWithSpaces === null || fileData.characterCountWithoutSpaces === null);
         const needsTasks = hasMarkdownTaskConsumer(settings) && (fileData.taskTotal === null || fileData.taskUnfinished === null);
 
@@ -625,7 +626,7 @@ export class MarkdownPipelineContentProvider extends FeatureImageContentProvider
         const previewEnabled = hasMarkdownPreviewConsumer(settings);
         const featureImageEnabled = hasMarkdownFeatureImageConsumer(settings);
         const wordCountEnabled = hasMarkdownWordCountConsumer(settings, this.app);
-        const characterCountEnabled = hasMarkdownCharacterCountConsumer(settings);
+        const characterCountEnabled = hasMarkdownCharacterCountConsumer(settings, this.app);
         const tasksEnabled = hasMarkdownTaskConsumer(settings);
         const previewPropertiesEnabled = previewEnabled && settings.previewProperties.length > 0;
         const featureImagePropertiesEnabled = featureImageEnabled && settings.featureImageProperties.length > 0;

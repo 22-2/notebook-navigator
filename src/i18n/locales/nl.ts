@@ -509,6 +509,14 @@ export const STRINGS_NL = {
             icon: 'Pictogram',
             color: 'Kleur',
             wordCount: 'Aantal woorden tonen',
+            characterCount: 'Tekenaantal tonen',
+            countType: 'Telleenheid',
+            countTypes: {
+                words: 'Woorden',
+                characters: 'Tekens'
+            },
+            characterCountTarget: 'Tekendoel',
+            characterCountTargetDescription: 'Als dit veld leeg is, wordt er geen doel per notitie gebruikt omdat de doeleigenschap woorddoelen bevat. Stel een doel voor deze groep in om de tekenvoortgang te tonen.',
             wordCountTarget: 'Doelaantal woorden',
             wordCountTargetPlaceholder: '10,000',
             wordCountTargetDescription:
